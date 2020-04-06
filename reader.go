@@ -257,7 +257,7 @@ func (db *reader) writeTXT(language string) (error){
 				fmt.Printf("%s\t%s\t%s\n",
 					fmt.Sprintf("%d.%d.%d.%d", byte(laststart>>24), byte(laststart>>16), byte(laststart>>8), byte(laststart)),
 					fmt.Sprintf("%d.%d.%d.%d", byte(lastend>>24), byte(lastend>>16), byte(lastend>>8), byte(lastend)),
-					tmp[off : off+len(db.meta.Fields)])
+					strings.Join(tmp[off : off+len(db.meta.Fields)], "\t"))
 
 				start = lastend + 1
 				laststart = start
