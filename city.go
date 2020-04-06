@@ -143,6 +143,6 @@ func (db *City) BuildTime() time.Time {
 }
 
 // WriteTXT write to text file
-func (db *City) WriteTXT() error {
-	return db.reader.writeTXT()
+func (db *City) WriteTXT(language string) error {
+	return db.reader.writeTXT(language)
 }
