@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"unsafe"
+	"fmt"
 )
 
 const IPv4 = 0x01
@@ -190,6 +191,93 @@ func (db *reader) find1(addr, language string) ([]string, error) {
 	return tmp[off : off+len(db.meta.Fields)], nil
 }
 
+func (db *reader) writeTXT() (error){
+	var node int
+	//var lastnode int
+	bitCount := uint(32)
+	
+	var start int64
+	var end int64
+
+	start = 0
+	//lastnode = db.v4offset
+
+	//loop from 0 to 2^32-1
+	for end=0; end<(2<<bitCount); {
+		node = db.v4offset
+
+		//convert uint32 to byte[]
+		b := make([]byte, 4)
+		binary.BigEndian.PutUint32(b, uint32(end))
+	
+		ip := net.IPv4(b[0], b[1], b[2], b[3]).To4()
+		//info, _ := db.Find(ip.String(), "CN")
+		//nodetmp, _ := db.search(ip, 32)
+		//fmt.Printf("ip: %s %v %s\n", ip.String(), nodetmp, info)
+		//fmt.Printf("end:%s\n", ip.String())
+		
+		//db.search()
+		for i := uint(0); i <= bitCount; i++ {
+			if node > db.nodeCount {
+				end = end>>(bitCount-i)<<(bitCount-i) + 1 << (bitCount-i) - 1
+				//if lastnode == node {
+				//	end ++
+				//	break;
+				//}
+				
+				body, _ := db.resolve(node)
+
+				fmt.Printf("%s %s %s\n",
+					fmt.Sprintf("%d.%d.%d.%d", byte(start>>24), byte(start>>16), byte(start>>8), byte(start)),
+					fmt.Sprintf("%d.%d.%d.%d", byte(end>>24), byte(end>>16), byte(end>>8), byte(end)),
+					string(body))
+
+				start = end + 1
+				end = end + 1
+				//lastnode = node
+
+				break
+			}
+
+			//i>>3: divide index of IP's bit by 8, for get index of IP's byte
+			//0xFF&(ip[i>>3]): get just on byte
+			//>>uint(7-(i%8)): trim surffix bit
+			//&1: get just one bit
+			node = db.readNode(node, ((0xFF&int(ip[i>>3]))>>uint(7-(i%8)))&1)
+		}
+	}
+	
+
+	//move index from right to left
+	//check 32th bit first, check 1st bit last
+	//at someone index, move index from right to left again
+	//loop as above, if node same as last one, merge result
+	/*for ip1:=0; ip1 < 256;ip1++ {
+		for ip2:=0; ip2 < 256; ip2++{
+			for ip3:=0; ip3 < 256; ip3++{
+				for ip4:=0; ip4 < 256; ip4++{
+					end=fmt.Sprintf("%v.%v.%v.%v", ip1, ip2, ip3, ip4)
+					newNode,_ := db.search(net.ParseIP(end), bitCount)
+					if node==-1 {
+						start = fmt.Sprintf("%v.%v.%v.%v", ip1, ip2, ip3, ip4)
+						node = newNode
+					}
+					
+					if newNode == node {
+						continue;
+					} else {
+						node = -1
+						body,_ := db.resolve(newNode)
+						fmt.Printf("%s %s %s\n", start, end, string(body))
+					}
+				}
+			}
+		}
+	}*/
+
+	return nil
+}
+
 func (db *reader) search(ip net.IP, bitCount int) (int, error) {
 
 	var node int
@@ -204,7 +292,10 @@ func (db *reader) search(ip net.IP, bitCount int) (int, error) {
 		if node > db.nodeCount {
 			break
 		}
-
+		//i>>3: divide index of IP's bit by 8, for get index of IP's byte
+		//0xFF&(ip[i>>3]): get just on byte
+		//>>uint(7-(i%8)): trim surffix bit
+		//&1: get just one bit
 		node = db.readNode(node, ((0xFF&int(ip[i>>3]))>>uint(7-(i%8)))&1)
 	}
 

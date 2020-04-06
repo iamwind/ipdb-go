@@ -141,3 +141,8 @@ func (db *City) Fields() []string {
 func (db *City) BuildTime() time.Time {
 	return db.reader.Build()
 }
+
+// WriteTXT write to text file
+func (db *City) WriteTXT() error {
+	return db.reader.writeTXT()
+}

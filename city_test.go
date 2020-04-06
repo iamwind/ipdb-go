@@ -5,15 +5,16 @@ import "testing"
 var db *City
 
 func init() {
-	db, _ = NewCity("city.free.ipdb")
+	db, _ = NewCity("/mnt/y/mydatavipchina2_cn.ipdb")
 }
 
 func TestNewCity(t *testing.T) {
-	db, err := NewCity("city.free.ipdb")
+	db, err := NewCity("/mnt/y/mydatavipchina2_cn.ipdb")
 	if err != nil {
 		t.Log(err)
 	}
-
+	
+	db.WriteTXT()
 	t.Log(db.BuildTime())
 }
 
