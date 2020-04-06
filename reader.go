@@ -191,7 +191,7 @@ func (db *reader) find1(addr, language string) ([]string, error) {
 	return tmp[off : off+len(db.meta.Fields)], nil
 }
 
-func (db *reader) writeTXT() (error){
+func (db *reader) writeTXT(language string) (error){
 	var node int
 	var lastnode int
 	bitCount := uint(32)
@@ -242,10 +242,22 @@ func (db *reader) writeTXT() (error){
 				
 				body, _ := db.resolve(lastnode)
 
+				off, ok := db.meta.Languages[language]
+				if !ok {
+					return ErrNoSupportLanguage
+				}
+
+				str := (*string)(unsafe.Pointer(&body))
+				tmp := strings.Split(*str, "\t")
+
+				if (off + len(db.meta.Fields)) > len(tmp) {
+					return ErrDatabaseError
+				}
+
 				fmt.Printf("%s\t%s\t%s\n",
 					fmt.Sprintf("%d.%d.%d.%d", byte(laststart>>24), byte(laststart>>16), byte(laststart>>8), byte(laststart)),
 					fmt.Sprintf("%d.%d.%d.%d", byte(lastend>>24), byte(lastend>>16), byte(lastend>>8), byte(lastend)),
-					string(body))
+					tmp[off : off+len(db.meta.Fields)])
 
 				start = lastend + 1
 				laststart = start
@@ -263,34 +275,6 @@ func (db *reader) writeTXT() (error){
 			node = db.readNode(node, ((0xFF&int(ip[i>>3]))>>uint(7-(i%8)))&1)
 		}
 	}
-	
-
-	//move index from right to left
-	//check 32th bit first, check 1st bit last
-	//at someone index, move index from right to left again
-	//loop as above, if node same as last one, merge result
-	/*for ip1:=0; ip1 < 256;ip1++ {
-		for ip2:=0; ip2 < 256; ip2++{
-			for ip3:=0; ip3 < 256; ip3++{
-				for ip4:=0; ip4 < 256; ip4++{
-					end=fmt.Sprintf("%v.%v.%v.%v", ip1, ip2, ip3, ip4)
-					newNode,_ := db.search(net.ParseIP(end), bitCount)
-					if node==-1 {
-						start = fmt.Sprintf("%v.%v.%v.%v", ip1, ip2, ip3, ip4)
-						node = newNode
-					}
-					
-					if newNode == node {
-						continue;
-					} else {
-						node = -1
-						body,_ := db.resolve(newNode)
-						fmt.Printf("%s %s %s\n", start, end, string(body))
-					}
-				}
-			}
-		}
-	}*/
 
 	return nil
 }
