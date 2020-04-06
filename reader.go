@@ -207,7 +207,7 @@ func (db *reader) writeTXT(language string) (error){
 	lastend = 0
 
 	//loop from 0 to 2^32-1
-	for end=0; end<(2<<bitCount); {
+	for end=0; end<(1<<bitCount); {
 		node = db.v4offset
 
 		//convert uint32 to byte[]
