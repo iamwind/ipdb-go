@@ -254,6 +254,12 @@ func (db *reader) writeTXT(language string) (error){
 					return ErrDatabaseError
 				}
 
+				for index:=off; index < len(tmp); index++ {
+					if tmp[index] == "" {
+						tmp[index] = "*"
+					}
+				}
+
 				fmt.Printf("%s\t%s\t%s\n",
 					fmt.Sprintf("%d.%d.%d.%d", byte(laststart>>24), byte(laststart>>16), byte(laststart>>8), byte(laststart)),
 					fmt.Sprintf("%d.%d.%d.%d", byte(lastend>>24), byte(lastend>>16), byte(lastend>>8), byte(lastend)),
