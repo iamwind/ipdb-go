@@ -193,14 +193,18 @@ func (db *reader) find1(addr, language string) ([]string, error) {
 
 func (db *reader) writeTXT() (error){
 	var node int
-	//var lastnode int
+	var lastnode int
 	bitCount := uint(32)
 	
 	var start int64
 	var end int64
+	var laststart int64
+	var lastend int64
 
 	start = 0
-	//lastnode = db.v4offset
+	lastnode = db.v4offset
+	laststart = 0
+	lastend = 0
 
 	//loop from 0 to 2^32-1
 	for end=0; end<(2<<bitCount); {
@@ -218,24 +222,37 @@ func (db *reader) writeTXT() (error){
 		
 		//db.search()
 		for i := uint(0); i <= bitCount; i++ {
-			if node > db.nodeCount {
+			if node > db.nodeCount {				
 				end = end>>(bitCount-i)<<(bitCount-i) + 1 << (bitCount-i) - 1
-				//if lastnode == node {
-				//	end ++
-				//	break;
-				//}
-				
-				body, _ := db.resolve(node)
+				//find first
+				if lastnode == db.v4offset {
+					lastend = end
+					lastnode = node
+					end++
+					break
+				}
 
-				fmt.Printf("%s %s %s\n",
-					fmt.Sprintf("%d.%d.%d.%d", byte(start>>24), byte(start>>16), byte(start>>8), byte(start)),
-					fmt.Sprintf("%d.%d.%d.%d", byte(end>>24), byte(end>>16), byte(end>>8), byte(end)),
+				//if node is same
+				if lastnode == node {
+					lastend = end
+					lastnode = node
+					end++
+					break
+				}
+				
+				body, _ := db.resolve(lastnode)
+
+				fmt.Printf("%s\t%s\t%s\n",
+					fmt.Sprintf("%d.%d.%d.%d", byte(laststart>>24), byte(laststart>>16), byte(laststart>>8), byte(laststart)),
+					fmt.Sprintf("%d.%d.%d.%d", byte(lastend>>24), byte(lastend>>16), byte(lastend>>8), byte(lastend)),
 					string(body))
 
-				start = end + 1
-				end = end + 1
-				//lastnode = node
-
+				start = lastend + 1
+				laststart = start
+				lastend = end
+				lastnode = node
+				
+				end ++
 				break
 			}
 
